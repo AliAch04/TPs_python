@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur KNN Interactif</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --class-0: #3b82f6;
+            --class-1: #ef4444;
+            --class-2: #10b981;
+            --class-3: #f59e0b;
+            --class-4: #8b5cf6;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #fef3c7 100%);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* Carte de contrôle */
+        .control-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 20px;
+        }
+
+        .control-card h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .control-group .hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+            height: 6px;
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .slider-value {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-left: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        .btn-danger {
+            background: white;
+            border: 2px solid #fecaca;
+            color: var(--danger);
+            font-size: 0.8rem;
+            padding: 6px 12px;
+        }
+        .btn-danger:hover { background: #fef2f2; }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .query-section {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 8px;
+        }
+
+        .query-section .coord-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .query-section input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .query-section input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Carte de visualisation */
+        .viz-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .viz-card .viz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .viz-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .stats-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-knn {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+        .badge-pred {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .badge-none {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        canvas {
+            border-radius: 8px;
+            cursor: crosshair;
+            width: 100%;
+            background: #fdfdfd;
+            border: 1px solid var(--border);
+        }
+
+        /* Tableau des voisins */
+        .neighbors-table {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .neighbors-table h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .highlight-row {
+            background: #fefce8;
+        }
+
+        .class-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        /* Info box */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: #1e40af;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .control-card {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 KNN Interactive Simulator</h1>
+            <p class="subtitle">Cliquez pour ajouter des points • Réglez K pour voir les frontières de décision</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Panneau de contrôle -->
+            <div class="control-card">
+                <h2>⚙️ Paramètres</h2>
+
+                <div class="control-group">
+                    <label>Nombre de voisins K <span class="slider-value" id="k-value-display">3</span></label>
+                    <input type="range" id="k-slider" min="1" max="15" value="3" step="1">
+                    <div class="range-labels"><span>1</span><span>15</span></div>
+                </div>
+
+                <div class="control-group">
+                    <label>Point de requête</label>
+                    <div class="query-section">
+                        <div class="coord-row">
+                            <div style="flex:1">
+                                <span class="hint">X</span>
+                                <input type="number" id="query-x" value="0" step="0.1">
+                            </div>
+                            <div style="flex:1">
+                                <span class="hint">Y</span>
+                                <input type="number" id="query-y" value="0" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-outline" id="btn-add-class0" style="flex:1">➕ Classe 🔵</button>
+                    <button class="btn btn-outline" id="btn-add-class1" style="flex:1">➕ Classe 🔴</button>
+                </div>
+
+                <button class="btn btn-primary" id="btn-generate" style="margin-top:8px">
+                    🎲 Générer données aléatoires
+                </button>
+
+                <div class="btn-row" style="margin-top:8px">
+                    <button class="btn btn-danger" id="btn-clear">🗑️ Effacer tout</button>
+                    <button class="btn btn-outline" id="btn-preset" style="flex:1">📦 Préréglage démo</button>
+                </div>
+
+                <div class="info-box" id="info-box">
+                    <strong>💡 Comment utiliser :</strong>
+                    1. Cliquez sur le canevas pour ajouter des points.<br>
+                    2. Utilisez les boutons pour changer la classe courante.<br>
+                    3. Déplacez le point requête (étoile) ou changez ses coordonnées.<br>
+                    4. Ajustez K pour voir l'impact.
+                </div>
+            </div>
+
+            <!-- Zone de visualisation -->
+            <div class="viz-card">
+                <div class="viz-header">
+                    <h2>📊 Visualisation</h2>
+                    <div class="stats-badges">
+                        <span class="badge badge-knn" id="badge-k">K = 3</span>
+                        <span class="badge badge-pred" id="badge-pred">Prédiction : -</span>
+                        <span class="badge" style="background:#f0fdf4;color:#166534;" id="badge-count">Points : 0</span>
+                    </div>
+                </div>
+                <canvas id="canvas" width="700" height="500"></canvas>
+                <div class="neighbors-table" id="table-container" style="display:none;">
+                    <h3>📋 Voisins classés par distance</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Rang</th><th>Distance</th><th>Classe</th><th>Coordonnées</th></tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ÉTAT DE L'APPLICATION ====================
+        const state = {
+            points: [],           // { x, y, class }
+            queryPoint: { x: 0, y: 0 },
+            k: 3,
+            currentClass: 0,      // classe ajoutée par défaut au clic
+            canvasWidth: 700,
+            canvasHeight: 500,
+            xMin: -6, xMax: 6,
+            yMin: -4, yMax: 4,
+            dragging: false,
+        };
+
+        // Références DOM
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const kSlider = document.getElementById('k-slider');
+        const kDisplay = document.getElementById('k-value-display');
+        const queryXInput = document.getElementById('query-x');
+        const queryYInput = document.getElementById('query-y');
+        const badgeK = document.getElementById('badge-k');
+        const badgePred = document.getElementById('badge-pred');
+        const badgeCount = document.getElementById('badge-count');
+        const infoBox = document.getElementById('info-box');
+        const tableContainer = document.getElementById('table-container');
+        const tableBody = document.getElementById('table-body');
+
+        // Couleurs des classes
+        const classColors = [
+            '#3b82f6', // bleu
+            '#ef4444', // rouge
+            '#10b981', // vert
+            '#f59e0b', // orange
+            '#8b5cf6', // violet
+        ];
+        const classNames = ['Classe 0', 'Classe 1', 'Classe 2', 'Classe 3', 'Classe 4'];
+
+        // ==================== FONCTIONS MATHÉMATIQUES ====================
+        function euclideanDistance(a, b) {
+            return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+        }
+
+        function knnPredict(queryPoint, points, k) {
+            if (points.length === 0) return { prediction: null, neighbors: [] };
+
+            // Calculer toutes les distances
+            const distances = points.map((p, idx) => ({
+                ...p,
+                distance: euclideanDistance(queryPoint, p),
+                originalIndex: idx,
+            }));
+
+            // Trier par distance croissante
+            distances.sort((a, b) => a.distance - b.distance);
+
+            // Prendre les K plus proches
+            const kNeighbors = distances.slice(0, Math.min(k, distances.length));
+
+            // Vote majoritaire
+            const classVotes = {};
+            kNeighbors.forEach(n => {
+                classVotes[n.class] = (classVotes[n.class] || 0) + 1;
+            });
+
+            // Trouver la classe majoritaire
+            let maxVotes = 0;
+            let predictedClass = null;
+            const ties = [];
+            for (const [cls, votes] of Object.entries(classVotes)) {
+                if (votes > maxVotes) {
+                    maxVotes = votes;
+                    predictedClass = parseInt(cls);
+                    ties.length = 0;
+                    ties.push(parseInt(cls));
+                } else if (votes === maxVotes) {
+                    ties.push(parseInt(cls));
+                }
+            }
+
+            // En cas d'égalité, prendre la plus proche parmi les ex-aequo
+            if (ties.length > 1) {
+                for (const n of kNeighbors) {
+                    if (ties.includes(n.class)) {
+                        predictedClass = n.class;
+                        break;
+                    }
+                }
+            }
+
+            return {
+                prediction: predictedClass,
+                neighbors: kNeighbors,
+                votes: classVotes,
+            };
+        }
+
+        // ==================== DESSIN ====================
+        function worldToCanvas(wx, wy) {
+            const px = ((wx - state.xMin) / (state.xMax - state.xMin)) * state.canvasWidth;
+            const py = state.canvasHeight - ((wy - state.yMin) / (state.yMax - state.yMin)) * state.canvasHeight;
+            return { x: px, y: py };
+        }
+
+        function canvasToWorld(cx, cy) {
+            const wx = state.xMin + (cx / state.canvasWidth) * (state.xMax - state.xMin);
+            const wy = state.yMin + ((state.canvasHeight - cy) / state.canvasHeight) * (state.yMax - state.yMin);
+            return { x: wx, y: wy };
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 0.5;
+            for (let x = Math.ceil(state.xMin); x <= Math.floor(state.xMax); x++) {
+                const p = worldToCanvas(x, 0);
+                ctx.beginPath();
+                ctx.moveTo(p.x, 0);
+                ctx.lineTo(p.x, state.canvasHeight);
+                ctx.stroke();
+            }
+            for (let y = Math.ceil(state.yMin); y <= Math.floor(state.yMax); y++) {
+                const p = worldToCanvas(0, y);
+                ctx.beginPath();
+                ctx.moveTo(0, p.y);
+                ctx.lineTo(state.canvasWidth, p.y);
+                ctx.stroke();
+            }
+            // Axes
+            const origin = worldToCanvas(0, 0);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(origin.x, 0);
+            ctx.lineTo(origin.x, state.canvasHeight);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, origin.y);
+            ctx.lineTo(state.canvasWidth, origin.y);
+            ctx.stroke();
+        }
+
+        function drawDecisionBoundary(k) {
+            if (state.points.length < 2) return;
+            const resolution = 3; // pixels entre chaque échantillon
+            const imageData = ctx.createImageData(state.canvasWidth, state.canvasHeight);
+            const data = imageData.data;
+
+            for (let px = 0; px < state.canvasWidth; px += resolution) {
+                for (let py = 0; py < state.canvasHeight; py += resolution) {
+                    const world = canvasToWorld(px, py);
+                    const result = knnPredict(world, state.points, k);
+                    if (result.prediction === null) continue;
+                    const color = classColors[result.prediction % classColors.length];
+                    const r = parseInt(color.slice(1, 3), 16);
+                    const g = parseInt(color.slice(3, 5), 16);
+                    const b = parseInt(color.slice(5, 7), 16);
+
+                    // Remplir le bloc de pixels
+                    for (let dx = 0; dx < resolution && px + dx < state.canvasWidth; dx++) {
+                        for (let dy = 0; dy < resolution && py + dy < state.canvasHeight; dy++) {
+                            const idx = ((py + dy) * state.canvasWidth + (px + dx)) * 4;
+                            data[idx] = r;
+                            data[idx + 1] = g;
+                            data[idx + 2] = b;
+                            data[idx + 3] = 40; // transparence
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function drawAll() {
+            ctx.clearRect(0, 0, state.canvasWidth, state.canvasHeight);
+
+            // 1. Frontière de décision
+            drawDecisionBoundary(state.k);
+
+            // 2. Grille
+            drawGrid();
+
+            // 3. Points d'entraînement
+            state.points.forEach((p, idx) => {
+                const canvasPos = worldToCanvas(p.x, p.y);
+                const color = classColors[p.class % classColors.length];
+
+                // Ombre portée
+                ctx.beginPath();
+                ctx.arc(canvasPos.x + 1, canvasPos.y + 1, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                ctx.fill();
+
+                // Cercle principal
+                ctx.beginPath();
+                ctx.arc(canvasPos.x, canvasPos.y, 7, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Label
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 9px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(idx, canvasPos.x, canvasPos.y - 12);
+            });
+
+            // 4. Voisins surlignés (si requête active et points existants)
+            if (state.points.length > 0) {
+                const result = knnPredict(state.queryPoint, state.points, state.k);
+                result.neighbors.forEach(n => {
+                    const canvasPos = worldToCanvas(n.x, n.y);
+                    ctx.beginPath();
+                    ctx.arc(canvasPos.x, canvasPos.y, 12, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#1e293b';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([]);
+                    ctx.stroke();
+                });
+
+                // Lignes vers les voisins
+                const qCanvas = worldToCanvas(state.queryPoint.x, state.queryPoint.y);
+                result.neighbors.forEach(n => {
+                    const nCanvas = worldToCanvas(n.x, n.y);
+                    ctx.beginPath();
+                    ctx.moveTo(qCanvas.x, qCanvas.y);
+                    ctx.lineTo(nCanvas.x, nCanvas.y);
+                    ctx.strokeStyle = 'rgba(30,41,59,0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                });
+            }
+
+            // 5. Point de requête (étoile)
+            const qCanvas = worldToCanvas(state.queryPoint.x, state.queryPoint.y);
+            drawStar(qCanvas.x, qCanvas.y, 5, 14, 7);
+
+            // 6. Légende
+            drawLegend();
+
+            // Mettre à jour les badges et le tableau
+            updateUI();
+        }
+
+        function drawStar(cx, cy, spikes, outerRadius, innerRadius) {
+            const rot = Math.PI / 2 * 3;
+            const step = Math.PI / spikes;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            for (let i = 0; i < spikes; i++) {
+                let x = cx + Math.cos(rot + step * i * 2) * outerRadius;
+                let y = cy + Math.sin(rot + step * i * 2) * outerRadius;
+                ctx.lineTo(x, y);
+                x = cx + Math.cos(rot + step * (i * 2 + 1)) * innerRadius;
+                y = cy + Math.sin(rot + step * (i * 2 + 1)) * innerRadius;
+                ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+
+        function drawLegend() {
+            const startX = 15;
+            let startY = state.canvasHeight - 100;
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillRect(startX - 8, startY - 25, 150, 90);
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(startX - 8, startY - 25, 150, 90);
+
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillStyle = '#1e293b';
+            ctx.fillText('Légende', startX, startY - 8);
+
+            const uniqueClasses = [...new Set(state.points.map(p => p.class))].sort();
+            uniqueClasses.forEach((cls, i) => {
+                const y = startY + 15 + i * 20;
+                ctx.beginPath();
+                ctx.arc(startX + 6, y - 3, 6, 0, Math.PI * 2);
+                ctx.fillStyle = classColors[cls % classColors.length];
+                ctx.fill();
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillStyle = '#1e293b';
+                ctx.font = '11px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Classe ${cls} (${state.points.filter(p => p.class === cls).length})`, startX + 18, y);
+            });
+        }
+
+        function updateUI() {
+            const k = state.k;
+            badgeK.textContent = `K = ${k}`;
+            badgeCount.textContent = `Points : ${state.points.length}`;
+
+            if (state.points.length === 0) {
+                badgePred.textContent = 'Prédiction : -';
+                badgePred.className = 'badge badge-none';
+                tableContainer.style.display = 'none';
+                return;
+            }
+
+            const result = knnPredict(state.queryPoint, state.points, k);
+            const pred = result.prediction;
+            if (pred !== null && pred !== undefined) {
+                badgePred.textContent = `Prédiction : Classe ${pred}`;
+                badgePred.className = 'badge badge-pred';
+                badgePred.style.background = classColors[pred % classColors.length] + '33';
+                badgePred.style.color = classColors[pred % classColors.length];
+            } else {
+                badgePred.textContent = 'Prédiction : -';
+                badgePred.className = 'badge badge-none';
+            }
+
+            // Tableau des voisins
+            if (result.neighbors.length > 0) {
+                tableContainer.style.display = 'block';
+                tableBody.innerHTML = result.neighbors.map((n, i) => `
+                    <tr class="${i < k ? 'highlight-row' : ''}">
+                        <td><strong>#${i + 1}</strong> ${i < k ? '⭐' : ''}</td>
+                        <td>${n.distance.toFixed(3)}</td>
+                        <td><span class="class-dot" style="background:${classColors[n.class % classColors.length]}"></span>${n.class}</td>
+                        <td>(${n.x.toFixed(2)}, ${n.y.toFixed(2)})</td>
+                    </tr>
+                `).join('');
+            } else {
+                tableContainer.style.display = 'none';
+            }
+        }
+
+        // ==================== GESTIONNAIRES D'ÉVÉNEMENTS ====================
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = state.canvasWidth / rect.width;
+            const scaleY = state.canvasHeight / rect.height;
+            const cx = (e.clientX - rect.left) * scaleX;
+            const cy = (e.clientY - rect.top) * scaleY;
+            const world = canvasToWorld(cx, cy);
+            state.points.push({ x: world.x, y: world.y, class: state.currentClass });
+            drawAll();
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = state.canvasWidth / rect.width;
+            const scaleY = state.canvasHeight / rect.height;
+            const cx = (e.clientX - rect.left) * scaleX;
+            const cy = (e.clientY - rect.top) * scaleY;
+            const world = canvasToWorld(cx, cy);
+            const qCanvas = worldToCanvas(state.queryPoint.x, state.queryPoint.y);
+            const dist = Math.sqrt((cx - qCanvas.x) ** 2 + (cy - qCanvas.y) ** 2);
+            if (dist < 20) {
+                state.dragging = true;
+                e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!state.dragging) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = state.canvasWidth / rect.width;
+            const scaleY = state.canvasHeight / rect.height;
+            const cx = (e.clientX - rect.left) * scaleX;
+            const cy = (e.clientY - rect.top) * scaleY;
+            const world = canvasToWorld(cx, cy);
+            state.queryPoint.x = Math.round(world.x * 100) / 100;
+            state.queryPoint.y = Math.round(world.y * 100) / 100;
+            queryXInput.value = state.queryPoint.x;
+            queryYInput.value = state.queryPoint.y;
+            drawAll();
+        });
+
+        window.addEventListener('mouseup', () => { state.dragging = false; });
+
+        kSlider.addEventListener('input', () => {
+            state.k = parseInt(kSlider.value);
+            kDisplay.textContent = state.k;
+            drawAll();
+        });
+
+        queryXInput.addEventListener('input', () => {
+            state.queryPoint.x = parseFloat(queryXInput.value) || 0;
+            drawAll();
+        });
+        queryYInput.addEventListener('input', () => {
+            state.queryPoint.y = parseFloat(queryYInput.value) || 0;
+            drawAll();
+        });
+
+        document.getElementById('btn-add-class0').addEventListener('click', () => {
+            state.currentClass = 0;
+            document.getElementById('btn-add-class0').style.borderColor = classColors[0];
+            document.getElementById('btn-add-class0').style.background = classColors[0] + '22';
+            document.getElementById('btn-add-class1').style.borderColor = '#e2e8f0';
+            document.getElementById('btn-add-class1').style.background = 'white';
+            infoBox.innerHTML = '<strong>💡 Mode ajout :</strong> Cliquez sur le canevas pour ajouter un point de <span style="color:#3b82f6;font-weight:700">Classe 0 (🔵)</span>.';
+        });
+
+        document.getElementById('btn-add-class1').addEventListener('click', () => {
+            state.currentClass = 1;
+            document.getElementById('btn-add-class1').style.borderColor = classColors[1];
+            document.getElementById('btn-add-class1').style.background = classColors[1] + '22';
+            document.getElementById('btn-add-class0').style.borderColor = '#e2e8f0';
+            document.getElementById('btn-add-class0').style.background = 'white';
+            infoBox.innerHTML = '<strong>💡 Mode ajout :</strong> Cliquez sur le canevas pour ajouter un point de <span style="color:#ef4444;font-weight:700">Classe 1 (🔴)</span>.';
+        });
+
+        document.getElementById('btn-generate').addEventListener('click', () => {
+            state.points = [];
+            const numPoints = 40;
+            const centers = [
+                { x: -2, y: 1, class: 0, std: 1.2 },
+                { x: 2, y: -1, class: 1, std: 1.2 },
+            ];
+            centers.forEach(center => {
+                for (let i = 0; i < numPoints / centers.length; i++) {
+                    // Box-Muller pour distribution normale
+                    const u1 = Math.random();
+                    const u2 = Math.random();
+                    const z1 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                    const z2 = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
+                    state.points.push({
+                        x: center.x + z1 * center.std,
+                        y: center.y + z2 * center.std,
+                        class: center.class,
+                    });
+                }
+            });
+            state.queryPoint = { x: 0, y: 0 };
+            queryXInput.value = 0;
+            queryYInput.value = 0;
+            drawAll();
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            state.points = [];
+            state.queryPoint = { x: 0, y: 0 };
+            queryXInput.value = 0;
+            queryYInput.value = 0;
+            drawAll();
+        });
+
+        document.getElementById('btn-preset').addEventListener('click', () => {
+            state.points = [
+                { x: -2.5, y: 1.8, class: 0 }, { x: -2.0, y: -0.5, class: 0 },
+                { x: -1.5, y: 0.3, class: 0 }, { x: -3.0, y: -1.2, class: 0 },
+                { x: -1.0, y: 2.0, class: 0 }, { x: -2.8, y: 0.5, class: 0 },
+                { x: 2.5, y: -1.8, class: 1 }, { x: 1.8, y: 0.8, class: 1 },
+                { x: 3.0, y: -0.3, class: 1 }, { x: 1.5, y: -2.0, class: 1 },
+                { x: 2.0, y: 1.5, class: 1 }, { x: 3.2, y: 0.2, class: 1 },
+                { x: 0.2, y: -0.3, class: 0 }, { x: -0.5, y: 0.5, class: 1 },
+            ];
+            state.queryPoint = { x: 0, y: 0 };
+            state.k = 3;
+            kSlider.value = 3;
+            kDisplay.textContent = '3';
+            queryXInput.value = 0;
+            queryYInput.value = 0;
+            drawAll();
+            infoBox.innerHTML = '<strong>✅ Préréglage chargé !</strong> Essayez de changer K et déplacer l\'étoile.';
+        });
+
+        // Initialiser l'état des boutons de classe
+        document.getElementById('btn-add-class0').style.borderColor = classColors[0];
+        document.getElementById('btn-add-class0').style.background = classColors[0] + '22';
+
+        // Lancer avec le préréglage
+        document.getElementById('btn-preset').click();
+    </script>
+</body>
+</html>
